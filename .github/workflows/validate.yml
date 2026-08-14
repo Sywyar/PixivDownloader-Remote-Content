@@ -18,13 +18,35 @@ jobs:
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           fetch-depth: 0
+          persist-credentials: false
+          path: remote-content
+      - name: Check out signature verifier
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          repository: Sywyar/PixivDownloader
+          ref: 6a71b5120f8f0d05e64a98ec8341cfe1941d3e7e
+          persist-credentials: false
+          path: signature-source
+      - name: Set up JDK 17
+        uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5
+        with:
+          java-version: '17'
+          distribution: temurin
+          cache: maven
       - name: Validate content
+        working-directory: remote-content
         run: |
           python -m unittest discover -s scripts -p "test_*.py"
           python scripts/validate_content.py
+      - name: Verify announcement signature
+        run: |
+          mvn -B -ntp -f signature-source/pom.xml -pl pixivdownload-plugin-signature -am package -DskipTests -Dexec.skip=true
+          java -cp signature-source/pixivdownload-plugin-signature/target/pixivdownload-plugin-signature-1.0.0.jar top.sywyar.pixivdownload.plugin.signature.cli.PluginSignatureTool verify-manifest --manifest remote-content/announcements/index.json --signature remote-content/announcements/index.json.sig --repository-id pixivdownloader-remote-announcements
       - name: Protect published content in pull requests
         if: github.event_name == 'pull_request'
+        working-directory: remote-content
         run: python scripts/validate_content.py --base-ref "${{ github.event.pull_request.base.sha }}"
       - name: Protect published content on pushes
         if: github.event_name == 'push' && github.event.before != '0000000000000000000000000000000000000000'
+        working-directory: remote-content
         run: python scripts/validate_content.py --base-ref "${{ github.event.before }}"

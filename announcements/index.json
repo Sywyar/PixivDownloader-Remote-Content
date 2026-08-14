@@ -1,5 +1,8 @@
 {
   "schemaVersion": 1,
+  "sequence": 1,
+  "generatedAt": "2026-08-14T15:00:00Z",
+  "expiresAt": "2026-09-13T15:00:00Z",
   "requiredLocales": ["zh-CN", "en-US"],
   "announcements": [
     {
@@ -10,12 +13,14 @@
         "zh-CN": {
           "title": "欢迎使用 PixivDownloader",
           "summary": "感谢使用这款开源、免费的应用，并了解项目文档与网络访问边界。",
-          "contentUrl": "https://sywyar.github.io/PixivDownloader-Remote-Content/announcements/welcome-2026-08-12/zh-CN.html"
+          "contentUrl": "https://sywyar.github.io/PixivDownloader-Remote-Content/announcements/welcome-2026-08-12/zh-CN.html",
+          "contentSha256": "d31bad46c16270dd10f29244c251fe884dbc5e8ede64324c699a1885868b9608"
         },
         "en-US": {
           "title": "Welcome to PixivDownloader",
           "summary": "Thank you for using this free and open-source application. Learn where to find its documentation and network-access details.",
-          "contentUrl": "https://sywyar.github.io/PixivDownloader-Remote-Content/announcements/welcome-2026-08-12/en-US.html"
+          "contentUrl": "https://sywyar.github.io/PixivDownloader-Remote-Content/announcements/welcome-2026-08-12/en-US.html",
+          "contentSha256": "f2c5e31b53f2bf5603fb8248397e1a2d62a5e5eb3d37f2a17ab5a090e1f9a5cf"
         }
       }
     }

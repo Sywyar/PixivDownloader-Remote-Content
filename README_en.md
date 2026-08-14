@@ -7,6 +7,7 @@ This repository stores remote static content published to administrators of [Syw
 ## Announcement URLs
 
 - Index: `https://sywyar.github.io/PixivDownloader-Remote-Content/announcements/index.json`
+- Index signature: `https://sywyar.github.io/PixivDownloader-Remote-Content/announcements/index.json.sig`
 - Document: `https://sywyar.github.io/PixivDownloader-Remote-Content/announcements/<message-id>/<locale>.html`
 - Source: `announcements/<message-id>/<locale>.html` on the `master` branch
 
@@ -16,6 +17,8 @@ Locales use canonical BCP 47 tags such as `zh-CN` and `en-US`. The client select
 
 - Configure GitHub Pages to publish from the repository root on `master` and enforce HTTPS.
 - Protect `master` and require the `Content validation / validate` check.
+- The official Ed25519 trust root signs the exact index bytes. The client verifies the signature before parsing and rejects expired or rolled-back indexes; every document must also match its SHA-256 in the index.
+- An index is valid for at most 31 days. Renewal or any index change must increase `sequence`, refresh the validity window and document digests, and receive a new detached signature from a maintainer after all bytes are final. Ship a new trust root in the client before rotating the signing key.
 - Published announcement documents and existing locale metadata are immutable. Publish corrections under a new `message-id`. New locales may be added to an existing announcement.
 - HTML may contain only the static elements, inline CSS, and controlled HTTPS links accepted by the repository validator. Scripts, event attributes, forms, iframes, images, fonts, and other external resources are prohibited.
 - Never commit credentials, personal information, user data, or anything requiring access control. Treat every file in this repository and on GitHub Pages as public.

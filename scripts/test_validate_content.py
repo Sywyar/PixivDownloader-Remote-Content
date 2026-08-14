@@ -1,4 +1,5 @@
 from pathlib import Path
+import copy
 import unittest
 
 import validate_content as validator
@@ -16,8 +17,15 @@ def validate(source: str) -> None:
 
 
 class ContentValidatorTest(unittest.TestCase):
+    def current_index(self):
+        return validator.load_index_bytes(validator.INDEX_PATH.read_bytes(), "index.json")
+
     def test_current_document_is_accepted(self):
         validate(DOCUMENT)
+        validator.validate_index(self.current_index())
+        signature = validator.load_index_bytes(
+            validator.SIGNATURE_PATH.read_bytes(), "index.json.sig")
+        validator.validate_signature(signature)
 
     def test_active_or_external_content_is_rejected(self):
         attacks = (
@@ -53,9 +61,34 @@ class ContentValidatorTest(unittest.TestCase):
         with self.assertRaises(validator.ValidationError):
             validator.load_index_bytes(b'{"schemaVersion":1,"schemaVersion":1}', "fixture")
 
+    def test_index_sequence_validity_and_document_digest_are_required(self):
+        mutations = []
+        for key, value in (("sequence", 0),
+                           ("expiresAt", "2026-10-01T15:00:00Z")):
+            candidate = copy.deepcopy(self.current_index())
+            candidate[key] = value
+            mutations.append(candidate)
+        candidate = copy.deepcopy(self.current_index())
+        candidate["announcements"][0]["locales"]["en-US"]["contentSha256"] = "0" * 64
+        mutations.append(candidate)
+        for candidate in mutations:
+            with self.subTest(candidate=candidate):
+                with self.assertRaises(validator.ValidationError):
+                    validator.validate_index(candidate)
+
+    def test_signature_metadata_is_strict(self):
+        signature = validator.load_index_bytes(
+            validator.SIGNATURE_PATH.read_bytes(), "index.json.sig")
+        for key, value in (("algorithm", "RSA"), ("keyId", "unknown"), ("value", "AA==")):
+            candidate = dict(signature)
+            candidate[key] = value
+            with self.subTest(key=key):
+                with self.assertRaises(validator.ValidationError):
+                    validator.validate_signature(candidate)
+
     def test_published_documents_and_metadata_are_immutable(self):
         current = validator.validate_index(
-            validator.load_index_bytes(validator.INDEX_PATH.read_bytes(), "index.json"))
+            self.current_index())
         original_show = validator.git_show
         original_read_bytes = Path.read_bytes
 

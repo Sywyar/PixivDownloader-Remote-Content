@@ -4,11 +4,14 @@
 from __future__ import annotations
 
 import argparse
+import base64
+import binascii
+import hashlib
 import json
 import re
 import subprocess
 import sys
-from datetime import datetime
+from datetime import datetime, timedelta
 from html.parser import HTMLParser
 from pathlib import Path
 from urllib.parse import urlsplit
@@ -16,7 +19,10 @@ from urllib.parse import urlsplit
 
 ROOT = Path(__file__).resolve().parents[1]
 INDEX_PATH = ROOT / "announcements" / "index.json"
+SIGNATURE_PATH = ROOT / "announcements" / "index.json.sig"
 PUBLIC_BASE = "https://sywyar.github.io/PixivDownloader-Remote-Content/"
+OFFICIAL_KEY_ID = "pixivdownloader-official-root-2026-07"
+MAX_INDEX_VALIDITY = timedelta(days=31)
 CONTENT_SECURITY_POLICY = (
     "default-src 'none'; script-src 'none'; style-src 'unsafe-inline'; "
     "img-src 'none'; font-src 'none'; connect-src 'none'; media-src 'none'; "
@@ -26,6 +32,7 @@ CONTENT_SECURITY_POLICY = (
 ID_RE = re.compile(r"[a-z0-9][a-z0-9-]{0,79}\Z")
 LOCALE_RE = re.compile(r"[A-Za-z]{2,3}(?:-[A-Za-z0-9]{2,8})+\Z")
 DATE_RE = re.compile(r"\d{4}-\d{2}-\d{2}\Z")
+SHA256_RE = re.compile(r"[0-9a-f]{64}\Z")
 CONTROL_RE = re.compile(r"[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]")
 BLOCKED_CSS_RE = re.compile(
     r"url\s*\(|@import|@font-face|(?:image|image-set|cross-fade|element|paint|linear-gradient|"
@@ -88,6 +95,17 @@ def safe_text(value: object, context: str, maximum: int) -> str:
             f"{context}: must contain 1..{maximum} trimmed characters")
     require(not CONTROL_RE.search(value), f"{context}: control character is forbidden")
     return value
+
+
+def utc_timestamp(value: object, context: str) -> datetime:
+    timestamp = safe_text(value, context, 32)
+    try:
+        parsed = datetime.fromisoformat(timestamp.replace("Z", "+00:00"))
+    except ValueError as error:
+        raise ValidationError(f"{context}: invalid RFC 3339 timestamp") from error
+    require(timestamp.endswith("Z") and parsed.utcoffset() is not None,
+            f"{context}: UTC Z timestamp required")
+    return parsed
 
 
 def validate_link(value: str, context: str) -> None:
@@ -239,8 +257,15 @@ def load_index_bytes(data: bytes, context: str) -> dict:
 
 
 def validate_index(value: dict) -> dict[str, dict]:
-    require_keys(value, {"schemaVersion", "requiredLocales", "announcements"}, "index.json")
+    require_keys(value, {"schemaVersion", "sequence", "generatedAt", "expiresAt",
+                         "requiredLocales", "announcements"}, "index.json")
     require(value["schemaVersion"] == 1, "index.json: unsupported schemaVersion")
+    require(isinstance(value["sequence"], int) and not isinstance(value["sequence"], bool)
+            and value["sequence"] > 0, "index.json: sequence must be a positive integer")
+    generated_at = utc_timestamp(value["generatedAt"], "index.json.generatedAt")
+    expires_at = utc_timestamp(value["expiresAt"], "index.json.expiresAt")
+    require(generated_at < expires_at <= generated_at + MAX_INDEX_VALIDITY,
+            "index.json: validity must be positive and no longer than 31 days")
     locales = value["requiredLocales"]
     require(isinstance(locales, list) and locales and len(locales) == len(set(locales)),
             "index.json: requiredLocales must be a non-empty unique array")
@@ -258,13 +283,7 @@ def validate_index(value: dict) -> dict[str, dict]:
         message_id = safe_text(item["id"], f"{context}.id", 80)
         require(ID_RE.fullmatch(message_id), f"{context}.id: invalid message ID")
         require(message_id not in by_id, f"{context}.id: duplicate message ID")
-        published_at = safe_text(item["publishedAt"], f"{context}.publishedAt", 32)
-        try:
-            parsed_time = datetime.fromisoformat(published_at.replace("Z", "+00:00"))
-        except ValueError as error:
-            raise ValidationError(f"{context}.publishedAt: invalid RFC 3339 timestamp") from error
-        require(published_at.endswith("Z") and parsed_time.utcoffset() is not None,
-                f"{context}.publishedAt: UTC Z timestamp required")
+        utc_timestamp(item["publishedAt"], f"{context}.publishedAt")
         require(item["severity"] in {"info", "warning", "critical"},
                 f"{context}.severity: unsupported value")
         translations = item["locales"]
@@ -273,9 +292,13 @@ def validate_index(value: dict) -> dict[str, dict]:
         for locale, translation in translations.items():
             locale_context = f"{context}.locales.{locale}"
             require(isinstance(translation, dict), f"{locale_context}: expected an object")
-            require_keys(translation, {"title", "summary", "contentUrl"}, locale_context)
+            require_keys(translation, {"title", "summary", "contentUrl", "contentSha256"},
+                         locale_context)
             title = safe_text(translation["title"], f"{locale_context}.title", 160)
             safe_text(translation["summary"], f"{locale_context}.summary", 500)
+            digest = translation["contentSha256"]
+            require(isinstance(digest, str) and SHA256_RE.fullmatch(digest),
+                    f"{locale_context}.contentSha256: lowercase SHA-256 required")
             relative = Path("announcements") / message_id / f"{locale}.html"
             expected_url = PUBLIC_BASE + relative.as_posix()
             require(translation["contentUrl"] == expected_url,
@@ -285,8 +308,11 @@ def validate_index(value: dict) -> dict[str, dict]:
                     f"{relative}: document is missing or is a symlink")
             require(path.stat().st_size <= 256 * 1024,
                     f"{relative}: document exceeds 256 KiB")
+            document_bytes = path.read_bytes()
+            require(hashlib.sha256(document_bytes).hexdigest() == digest,
+                    f"{relative}: SHA-256 does not match index.json")
             try:
-                source = path.read_text(encoding="utf-8")
+                source = document_bytes.decode("utf-8")
             except UnicodeDecodeError as error:
                 raise ValidationError(f"{relative}: document is not UTF-8") from error
             parser = AnnouncementParser(path, locale, title)
@@ -304,6 +330,26 @@ def validate_index(value: dict) -> dict[str, dict]:
     require(actual_files == expected_files,
             "announcements: every HTML file must be referenced exactly once by index.json")
     return by_id
+
+
+def validate_signature(value: dict) -> None:
+    require_keys(value, {"formatVersion", "algorithm", "keyId", "value"},
+                 "announcements/index.json.sig")
+    require(value["formatVersion"] == 1,
+            "announcements/index.json.sig: unsupported formatVersion")
+    require(value["algorithm"] == "Ed25519",
+            "announcements/index.json.sig: unsupported algorithm")
+    require(value["keyId"] == OFFICIAL_KEY_ID,
+            "announcements/index.json.sig: unexpected keyId")
+    signature = value["value"]
+    require(isinstance(signature, str) and len(signature) <= 128,
+            "announcements/index.json.sig: invalid signature value")
+    try:
+        decoded = base64.b64decode(signature, validate=True)
+    except (ValueError, binascii.Error) as error:
+        raise ValidationError("announcements/index.json.sig: invalid Base64") from error
+    require(len(decoded) == 64,
+            "announcements/index.json.sig: Ed25519 signature must be 64 bytes")
 
 
 def git_show(base_ref: str, path: str) -> bytes | None:
@@ -338,6 +384,11 @@ def protect_published_content(base_ref: str, current: dict[str, dict]) -> None:
     require(old_index_bytes is not None,
             f"base ref {base_ref!r} does not contain announcements/index.json")
     old_index = load_index_bytes(old_index_bytes, f"{base_ref}:announcements/index.json")
+    old_sequence = old_index.get("sequence")
+    if isinstance(old_sequence, int) and not isinstance(old_sequence, bool):
+        require(INDEX_PATH.read_bytes() == old_index_bytes
+                or current_index_sequence() > old_sequence,
+                "index.json: changed content must increase sequence")
     old_entries = {item["id"]: item for item in old_index.get("announcements", [])}
     for message_id, old_entry in old_entries.items():
         require(message_id in current, f"published announcement {message_id} cannot be removed")
@@ -347,12 +398,22 @@ def protect_published_content(base_ref: str, current: dict[str, dict]) -> None:
                     f"published announcement {message_id}.{key} is immutable")
         for locale, old_translation in old_entry.get("locales", {}).items():
             new_translation = new_entry.get("locales", {}).get(locale)
-            require(new_translation == old_translation,
-                    f"published announcement {message_id}/{locale} metadata is immutable")
+            if "contentSha256" not in old_translation:
+                require(isinstance(new_translation, dict)
+                        and {key: value for key, value in new_translation.items()
+                             if key != "contentSha256"} == old_translation,
+                        f"published announcement {message_id}/{locale} metadata is immutable")
+            else:
+                require(new_translation == old_translation,
+                        f"published announcement {message_id}/{locale} metadata is immutable")
             relative = f"announcements/{message_id}/{locale}.html"
             old_document = git_show(base_ref, relative)
             require(old_document is not None and (ROOT / relative).read_bytes() == old_document,
                     f"published document {relative} is immutable")
+
+
+def current_index_sequence() -> int:
+    return load_index_bytes(INDEX_PATH.read_bytes(), "announcements/index.json")["sequence"]
 
 
 def main() -> int:
@@ -364,7 +425,14 @@ def main() -> int:
                 "announcements/index.json is missing or is a symlink")
         require(INDEX_PATH.stat().st_size <= 1024 * 1024,
                 "announcements/index.json exceeds 1 MiB")
+        require(SIGNATURE_PATH.is_file() and not SIGNATURE_PATH.is_symlink(),
+                "announcements/index.json.sig is missing or is a symlink")
+        require(SIGNATURE_PATH.stat().st_size <= 16 * 1024,
+                "announcements/index.json.sig exceeds 16 KiB")
         index = load_index_bytes(INDEX_PATH.read_bytes(), "announcements/index.json")
+        signature = load_index_bytes(SIGNATURE_PATH.read_bytes(),
+                                     "announcements/index.json.sig")
+        validate_signature(signature)
         current = validate_index(index)
         if args.base_ref:
             protect_published_content(args.base_ref, current)
