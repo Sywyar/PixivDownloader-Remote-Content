@@ -1,9 +1,9 @@
 {
   "schemaVersion": 1,
-  "sequence": 3,
-  "generatedAt": "2026-08-17T18:23:03Z",
-  "expiresAt": "2026-09-17T18:23:03Z",
-  "requiredLocales": ["zh-CN", "en-US", "zh-Hant", "ja-JP"],
+  "sequence": 4,
+  "generatedAt": "2026-08-17T21:12:28Z",
+  "expiresAt": "2026-09-17T21:12:28Z",
+  "requiredLocales": ["zh-CN", "en-US", "zh-Hant", "ja-JP", "ko-KR"],
   "announcements": [
     {
       "id": "welcome-2026-08-12",
@@ -33,6 +33,12 @@
           "summary": "無料のオープンソースアプリケーションと、ドキュメントおよびネットワークアクセスの詳細をご案内します。",
           "contentUrl": "https://sywyar.github.io/PixivDownloader-Remote-Content/announcements/welcome-2026-08-12/ja-JP.html",
           "contentSha256": "36925f8b9eec5aad5036a81dac9ff5beb8d2f1392f31df680d4e345a96c5e957"
+        },
+        "ko-KR": {
+          "title": "PixivDownloader를 사용해 주셔서 감사합니다",
+          "summary": "무료 오픈 소스 애플리케이션과 문서 및 네트워크 액세스 정보를 안내합니다.",
+          "contentUrl": "https://sywyar.github.io/PixivDownloader-Remote-Content/announcements/welcome-2026-08-12/ko-KR.html",
+          "contentSha256": "7e67af6ceb3522c5cb5ebd19b998f027ac75cb4d4b1ab54fa257aa18adc46e2c"
         }
       }
     }

@@ -1,6 +1,6 @@
 # PixivDownloader Remote Content
 
-[简体中文](README.md)
+[简体中文](README.md) · [한국어](README_ko.md)
 
 This repository stores remote static content published to administrators of [Sywyar/PixivDownloader](https://github.com/Sywyar/PixivDownloader). It currently contains announcement documents and their index. GitHub Pages publishes the files directly; there is no server-side application or dynamic build step.
 

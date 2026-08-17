@@ -1,6 +1,6 @@
 # PixivDownloader Remote Content
 
-[English](README_en.md)
+[English](README_en.md) · [한국어](README_ko.md)
 
 本仓库保存 [Sywyar/PixivDownloader](https://github.com/Sywyar/PixivDownloader) 面向管理员发布的远程静态内容，目前包括公告正文与公告索引。内容由 GitHub Pages 直接发布，不包含服务端程序或动态构建步骤。
 
