@@ -3,10 +3,10 @@
 ## Add an announcement
 
 1. Choose a stable lowercase `message-id` matching `[a-z0-9][a-z0-9-]{0,79}`. Never reuse an ID for different content.
-2. Create `announcements/<message-id>/zh-CN.html` and `en-US.html`. Use an existing document as the template.
+2. Create one HTML document for every locale in `announcements/index.json`'s `requiredLocales` list, currently `zh-CN.html`, `en-US.html`, and `zh-Hant.html`. Use an existing document as the template.
 3. Add one entry to `announcements/index.json`. Every locale entry must point to its exact GitHub Pages URL and contain the lowercase SHA-256 of the exact HTML bytes.
 4. Increase `sequence` and refresh `generatedAt` and `expiresAt`; the validity window must not exceed 31 days.
-5. Run `python -m unittest discover -s scripts -p "test_*.py"` and `python scripts/validate_content.py`, then review both languages.
+5. Run `python -m unittest discover -s scripts -p "test_*.py"` and `python scripts/validate_content.py`, then review every listed locale.
 6. Submit the change through a pull request. After all bytes are final, a maintainer updates `announcements/index.json.sig` with the protected signing key and waits for the required validation check.
 
 Published HTML and existing locale metadata are immutable. A correction is a new announcement with a new ID. Adding a previously missing locale is allowed, but changing or removing a published locale is not.

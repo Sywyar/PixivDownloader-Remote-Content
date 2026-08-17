@@ -11,7 +11,7 @@ This repository stores remote static content published to administrators of [Syw
 - Document: `https://sywyar.github.io/PixivDownloader-Remote-Content/announcements/<message-id>/<locale>.html`
 - Source: `announcements/<message-id>/<locale>.html` on the `master` branch
 
-Locales use canonical BCP 47 tags such as `zh-CN` and `en-US`. The client selects a locale from the index and applies its own locale fallback rules when no exact document exists.
+Locales use canonical BCP 47 tags such as `zh-CN`, `en-US`, and `zh-Hant`. The client selects a locale from the index and applies its own locale fallback rules when no exact document exists.
 
 ## Publishing and security boundary
 

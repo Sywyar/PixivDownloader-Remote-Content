@@ -11,7 +11,7 @@
 - 正文：`https://sywyar.github.io/PixivDownloader-Remote-Content/announcements/<message-id>/<locale>.html`
 - 源文件：`master` 分支的 `announcements/<message-id>/<locale>.html`
 
-语言使用规范化 BCP 47 tag，例如 `zh-CN`、`en-US`。客户端从索引选择目标语言；缺失时按应用自己的 locale 回退规则处理。
+语言使用规范化 BCP 47 tag，例如 `zh-CN`、`en-US`、`zh-Hant`。客户端从索引选择目标语言；缺失时按应用自己的 locale 回退规则处理。
 
 ## 发布与安全边界
 
