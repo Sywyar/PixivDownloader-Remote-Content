@@ -36,12 +36,15 @@ jobs:
       - name: Validate content
         working-directory: remote-content
         run: |
-          python -m unittest discover -s scripts -p "test_*.py"
           python scripts/validate_content.py
       - name: Verify announcement signature
+        env:
+          SIGNATURE_TOOL_JAR: ${{ github.workspace }}/signature-source/pixivdownload-plugin-signature/target/pixivdownload-plugin-signature-1.0.0.jar
         run: |
           mvn -B -ntp -f signature-source/pom.xml -pl pixivdownload-plugin-signature -am package -DskipTests -Dexec.skip=true
           java -cp signature-source/pixivdownload-plugin-signature/target/pixivdownload-plugin-signature-1.0.0.jar top.sywyar.pixivdownload.plugin.signature.cli.PluginSignatureTool verify-manifest --manifest remote-content/announcements/index.json --signature remote-content/announcements/index.json.sig --repository-id pixivdownloader-remote-announcements
+          cd remote-content
+          python -m unittest discover -s scripts -p "test_*.py"
       - name: Protect published content in pull requests
         if: github.event_name == 'pull_request'
         working-directory: remote-content

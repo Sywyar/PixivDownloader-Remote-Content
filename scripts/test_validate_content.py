@@ -1,5 +1,6 @@
 from pathlib import Path
 import copy
+from datetime import timedelta
 import unittest
 
 import validate_content as validator
@@ -63,8 +64,10 @@ class ContentValidatorTest(unittest.TestCase):
 
     def test_index_sequence_validity_and_document_digest_are_required(self):
         mutations = []
+        generated = validator.utc_timestamp(self.current_index()["generatedAt"], "generatedAt")
+        too_late = (generated + validator.MAX_INDEX_VALIDITY + timedelta(seconds=1)).isoformat().replace("+00:00", "Z")
         for key, value in (("sequence", 0),
-                           ("expiresAt", "2026-10-01T15:00:00Z")):
+                           ("expiresAt", too_late)):
             candidate = copy.deepcopy(self.current_index())
             candidate[key] = value
             mutations.append(candidate)
