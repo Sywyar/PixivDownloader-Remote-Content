@@ -2,6 +2,7 @@ from pathlib import Path
 import copy
 from datetime import timedelta
 import unittest
+from urllib.parse import urlsplit
 
 import validate_content as validator
 
@@ -47,6 +48,35 @@ class ContentValidatorTest(unittest.TestCase):
     def test_security_policy_is_required_verbatim(self):
         with self.assertRaises(validator.ValidationError):
             validate(DOCUMENT.replace("script-src 'none'; ", "", 1))
+
+    def test_report_links_require_exact_approved_urls(self):
+        reports = (
+            "https://bugzilla.mozilla.org/show_bug.cgi?id=2083449",
+            "https://emudhra.we-have-a-problem.com/",
+            "https://www.cve.org/CVERecord?id=CVE-2026-111943",
+            "https://go.dev/issue/82345",
+            "https://ops.java/emudhra",
+        )
+        for url in reports:
+            host = urlsplit(url).netloc
+            with self.subTest(url=url):
+                validate(DOCUMENT.replace("https://github.com/Sywyar/PixivDownloader", url, 1))
+            variants = (
+                url.replace("https:", "http:", 1),
+                url.replace("https://", "https://user@", 1),
+                url.replace("https://", "https://evil.example/", 1),
+                url.replace(host, host + ":443", 1),
+                url.replace(host, host + ".evil.example", 1),
+                url + "/other",
+                url + "?redirect=https://evil.example/",
+                url + "#other",
+                url + "%2f",
+            )
+            for variant in variants:
+                with self.subTest(variant=variant):
+                    with self.assertRaises(validator.ValidationError):
+                        validate(DOCUMENT.replace(
+                            "https://github.com/Sywyar/PixivDownloader", variant, 1))
 
     def test_only_indexed_html_is_allowed(self):
         original_listing = validator.listed_repository_files

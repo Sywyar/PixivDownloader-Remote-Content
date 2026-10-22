@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="ko-KR">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'none'; style-src 'unsafe-inline'; img-src 'none'; font-src 'none'; connect-src 'none'; media-src 'none'; object-src 'none'; frame-src 'none'; child-src 'none'; worker-src 'none'; form-action 'none'; base-uri 'none'">
+  <meta name="referrer" content="no-referrer">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>emSign 인증서 신뢰 위험</title>
+  <style>
+    :root { color-scheme: light dark; font-family: system-ui, -apple-system, "Segoe UI", sans-serif; }
+    body { margin: 0; color: #17324d; background: #f5f9ff; line-height: 1.7; }
+    main { box-sizing: border-box; max-width: 760px; margin: 0 auto; padding: 32px 24px 48px; }
+    article { overflow: hidden; border: 1px solid #cfe0f5; border-radius: 18px; background: #ffffff; box-shadow: 0 12px 36px rgba(37, 99, 235, 0.10); }
+    header { padding: 30px 32px 24px; color: #ffffff; background: #2563eb; }
+    header p { margin: 8px 0 0; color: #eaf2ff; }
+    section { padding: 24px 32px; border-top: 1px solid #e4edf8; }
+    h1 { margin: 0; font-size: 1.8rem; line-height: 1.3; }
+    h2 { margin: 0 0 12px; color: #1d4ed8; font-size: 1.1rem; }
+    p { margin: 10px 0; }
+    ul { margin: 12px 0 0; padding-left: 1.35rem; }
+    li { margin: 14px 0; }
+    a { color: #1d4ed8; font-weight: 650; overflow-wrap: anywhere; }
+    code { padding: 2px 6px; border-radius: 6px; background: #eaf2ff; overflow-wrap: anywhere; }
+    footer { padding: 18px 32px; color: #52677d; background: #f7faff; font-size: 0.9rem; }
+    @media (prefers-color-scheme: dark) {
+      body { color: #dbeafe; background: #0b1625; }
+      article { border-color: #284766; background: #10243a; box-shadow: none; }
+      section { border-color: #284766; }
+      h2, a { color: #93c5fd; }
+      code { background: #193653; }
+      footer { color: #a9bdd2; background: #0e2034; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <article>
+      <header><h1>emSign 인증서 신뢰 위험</h1><p>v1.14.2 및 이전 버전 사용자는 외부 HTTPS 통신 가로채기와 Cookie 등 민감한 데이터 유출 위험을 줄이기 위해 즉시 v1.14.3 이상으로 업데이트해 주세요.</p></header>
+      <section>
+        <h2>영향 범위</h2>
+        <p>v1.14.2 및 이전 버전 사용자는 모두 업데이트해야 합니다. 실제 사용하는 Java 런타임이나 신뢰 저장소가 영향을 받는 인증서 체인을 계속 신뢰하면 프로그램의 외부 TLS/HTTPS 통신에 위험이 있습니다. Windows 설치 파일과 포터블 패키지에 포함된 Java도 해당합니다. 별도로 설치한 Java나 사용자 지정 신뢰 저장소도 확인해야 합니다.</p>
+      </section>
+      <section>
+        <h2>보안 위험</h2>
+        <p>일부 eMudhra / emSign 중간 CA의 개인 키가 매우 취약해 공격자가 임의의 웹사이트를 사칭하는 신뢰할 수 있는 인증서를 위조할 수 있습니다. 트래픽을 가로챌 수 있는 공격자는 영향을 받는 신뢰 저장소를 사용하는 모든 외부 HTTPS 연결을 탈취하거나 도청·변조할 수 있습니다. 원래 emSign 인증서를 사용하는 웹사이트에만 한정되지 않습니다.</p>
+        <p>요청에 포함된 Cookie, 액세스 토큰, API Key, 사용자 콘텐츠가 유출되어 계정 보안이 위협받을 수 있습니다. 브라우저, 시스템 구성 요소, 외부 도구는 각자의 신뢰 체계를 사용하므로 별도로 확인해야 합니다. 이 위험이 모든 프로토콜이나 연결이 이미 침해되었다거나 로컬에 저장된 데이터가 직접 읽혔다는 뜻은 아닙니다.</p>
+      </section>
+      <section>
+        <h2>즉시 업데이트해 주세요</h2>
+        <p><strong>프로젝트 Release 페이지나 프로그램의 내장 업데이트 확인 등 공식 업데이트 경로를 통해 반드시 즉시 v1.14.3 이상으로 업데이트해 주세요. 설치를 완료하고 프로그램을 다시 시작하여 프로그램이 저장하고 네트워크 요청에 사용하는 Cookie 등 민감한 데이터를 보호해 주세요.</strong></p>
+        <p>v1.14.3 Windows 설치 파일과 Java가 포함된 포터블 패키지는 emSign ECC Root CA - G3 신뢰 루트를 제거하고 문제가 있는 인증서 체인을 검사합니다. 이 루트에 의존하는 정상 HTTPS 서비스도 거부됩니다. Java ZIP, 별도로 설치한 Java, 사용자 지정 trustStore를 사용하는 경우 실제 사용하는 런타임이나 신뢰 저장소도 업데이트해야 합니다. 프로그램 JAR만 교체하거나 시스템 Java 또는 Windows 인증서 저장소만 업데이트해서는 내장 런타임이 교체되지 않습니다.</p>
+        <p>업데이트를 마칠 때까지 민감한 데이터를 다루는 네트워크 작업을 중단해 주세요. 인증서나 호스트 이름 검증을 끄지 마세요. Cookie 등 자격 증명의 유출이 의심되면 해당 서비스에서 세션이나 자격 증명을 폐기하고 새로 발급받으세요. 프로그램을 업데이트해도 이미 유출된 데이터를 회수할 수는 없습니다.</p>
+      </section>
+      <section>
+        <h2>관련 링크</h2>
+        <ul>
+          <li><a href="https://sywyar.github.io/PixivDownloader/#/en/network-access" target="_blank" rel="noopener noreferrer">네트워크 액세스와 타사 서비스(프로그램의 외부 통신, 영어)</a></li>
+          <li><a href="https://github.com/Sywyar/PixivDownloader/releases" target="_blank" rel="noopener noreferrer">Release 페이지: v1.14.3 이상 다운로드</a></li>
+          <li><a href="https://bugzilla.mozilla.org/show_bug.cgi?id=2083449" target="_blank" rel="noopener noreferrer">최초 사고 보고서(Mozilla Bugzilla)</a></li>
+          <li><a href="https://emudhra.we-have-a-problem.com/" target="_blank" rel="noopener noreferrer">사고 설명과 공개 테스트 인증서 체인</a></li>
+          <li><a href="https://www.cve.org/CVERecord?id=CVE-2026-111943" target="_blank" rel="noopener noreferrer">관련 CVE 기록(CVE-2026-111943, Go의 대응 기록)</a></li>
+          <li><a href="https://go.dev/issue/82345" target="_blank" rel="noopener noreferrer">Go 공식 보안 이슈</a></li>
+          <li><a href="https://ops.java/emudhra" target="_blank" rel="noopener noreferrer">Java 공식 대응 안내</a></li>
+        </ul>
+      </section>
+      <footer><p>수정 버전: v1.14.3 이상</p></footer>
+    </article>
+  </main>
+</body>
+</html>

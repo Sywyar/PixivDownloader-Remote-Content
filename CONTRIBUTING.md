@@ -19,7 +19,7 @@ The validator intentionally accepts a small document language:
 - semantic text containers, lists, `code`, `strong`, `time`, and links;
 - one inline `<style>` block using system fonts and no `url()` or `@import`;
 - an exact restrictive CSP meta tag and `no-referrer` policy;
-- HTTPS links only to `github.com/Sywyar/PixivDownloader` or the PixivDownloader GitHub Pages documentation.
+- HTTPS links to `github.com/Sywyar/PixivDownloader`, the PixivDownloader GitHub Pages documentation, or the exact third-party report URLs listed in `ALLOWED_REFERENCE_LINKS` in `scripts/validate_content.py`. Other URLs on those third-party hosts are not allowed.
 
 Do not add scripts, event handlers, forms, frames, media, embedded data, external styles, fonts, images, tracking, redirects, or network requests. Do not add a dependency or site generator unless the static format can no longer satisfy an actual requirement.
 

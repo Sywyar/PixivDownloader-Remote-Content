@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'none'; style-src 'unsafe-inline'; img-src 'none'; font-src 'none'; connect-src 'none'; media-src 'none'; object-src 'none'; frame-src 'none'; child-src 'none'; worker-src 'none'; form-action 'none'; base-uri 'none'">
+  <meta name="referrer" content="no-referrer">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>emSign 证书信任风险</title>
+  <style>
+    :root { color-scheme: light dark; font-family: system-ui, -apple-system, "Segoe UI", sans-serif; }
+    body { margin: 0; color: #17324d; background: #f5f9ff; line-height: 1.7; }
+    main { box-sizing: border-box; max-width: 760px; margin: 0 auto; padding: 32px 24px 48px; }
+    article { overflow: hidden; border: 1px solid #cfe0f5; border-radius: 18px; background: #ffffff; box-shadow: 0 12px 36px rgba(37, 99, 235, 0.10); }
+    header { padding: 30px 32px 24px; color: #ffffff; background: #2563eb; }
+    header p { margin: 8px 0 0; color: #eaf2ff; }
+    section { padding: 24px 32px; border-top: 1px solid #e4edf8; }
+    h1 { margin: 0; font-size: 1.8rem; line-height: 1.3; }
+    h2 { margin: 0 0 12px; color: #1d4ed8; font-size: 1.1rem; }
+    p { margin: 10px 0; }
+    ul { margin: 12px 0 0; padding-left: 1.35rem; }
+    li { margin: 14px 0; }
+    a { color: #1d4ed8; font-weight: 650; overflow-wrap: anywhere; }
+    code { padding: 2px 6px; border-radius: 6px; background: #eaf2ff; overflow-wrap: anywhere; }
+    footer { padding: 18px 32px; color: #52677d; background: #f7faff; font-size: 0.9rem; }
+    @media (prefers-color-scheme: dark) {
+      body { color: #dbeafe; background: #0b1625; }
+      article { border-color: #284766; background: #10243a; box-shadow: none; }
+      section { border-color: #284766; }
+      h2, a { color: #93c5fd; }
+      code { background: #193653; }
+      footer { color: #a9bdd2; background: #0e2034; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <article>
+      <header><h1>emSign 证书信任风险</h1><p>v1.14.2 及以前版本的用户请立即更新至 v1.14.3 及以上，降低出站 HTTPS 通信被劫持及 Cookie 等敏感数据泄露的风险。</p></header>
+      <section>
+        <h2>影响范围</h2>
+        <p>v1.14.2 及以前版本的用户均应升级。使用仍信任受影响证书链的 Java 运行时或信任库时，程序的出站 TLS/HTTPS 通信存在风险，包括 Windows 安装包和便携包的内置 Java。自备 Java 或自定义信任库也需要单独检查。</p>
+      </section>
+      <section>
+        <h2>安全风险</h2>
+        <p>eMudhra / emSign 的部分中间 CA 私钥过弱，攻击者可据此为任意网站伪造受信任的证书。只要攻击者能够拦截流量，所有使用受影响信任库的出站 HTTPS 连接都可能被劫持、监听或篡改，不限于原本使用 emSign 证书的网站。</p>
+        <p>这可能泄露请求中携带的 Cookie、访问令牌、API Key 及用户内容，进而危及账号安全。浏览器、系统组件或外部工具使用各自的信任机制，需要分别判断；此风险不代表所有协议或每次连接都已被攻破，也不等于本地保存的数据已被直接读取。</p>
+      </section>
+      <section>
+        <h2>请立即更新</h2>
+        <p><strong>请您务必马上通过项目 Release 发布页、软件内置“检查更新”等入口，将程序更新至 v1.14.3 及以上，并完成安装、重启程序，以保护程序保存并在联网请求中使用的 Cookie 等敏感数据。</strong></p>
+        <p>v1.14.3 的 Windows 安装包和含内置 Java 的便携包移除了 emSign ECC Root CA - G3 信任根，并增加问题证书链检查。依赖该根的正常 HTTPS 服务也会不再受信任。使用 Java ZIP、自备 Java 或自定义 trustStore 的用户，还须更新实际使用的运行时或信任库；仅替换程序 JAR、更新系统 Java 或 Windows 证书库，不能替代内置运行时更新。</p>
+        <p>更新完成前请暂停涉及敏感数据的联网操作，不要关闭证书或主机名验证。如果怀疑 Cookie 等凭据已泄露，应在对应服务中撤销会话或凭据并重新获取；更新程序无法收回已经泄露的数据。</p>
+      </section>
+      <section>
+        <h2>相关链接</h2>
+        <ul>
+          <li><a href="https://sywyar.github.io/PixivDownloader/#/zh-cn/network-access" target="_blank" rel="noopener noreferrer">网络访问与第三方服务（程序的出站流量）</a></li>
+          <li><a href="https://github.com/Sywyar/PixivDownloader/releases" target="_blank" rel="noopener noreferrer">Release 发布页：下载 v1.14.3 或更新版本</a></li>
+          <li><a href="https://bugzilla.mozilla.org/show_bug.cgi?id=2083449" target="_blank" rel="noopener noreferrer">原始事件报告（Mozilla Bugzilla）</a></li>
+          <li><a href="https://emudhra.we-have-a-problem.com/" target="_blank" rel="noopener noreferrer">事件说明与公开测试样本</a></li>
+          <li><a href="https://www.cve.org/CVERecord?id=CVE-2026-111943" target="_blank" rel="noopener noreferrer">相关 CVE 记录（CVE-2026-111943，Go 的处置记录）</a></li>
+          <li><a href="https://go.dev/issue/82345" target="_blank" rel="noopener noreferrer">Go 官方安全问题记录</a></li>
+          <li><a href="https://ops.java/emudhra" target="_blank" rel="noopener noreferrer">Java 官方处置说明</a></li>
+        </ul>
+      </section>
+      <footer><p>修复版本：v1.14.3 及以上</p></footer>
+    </article>
+  </main>
+</body>
+</html>

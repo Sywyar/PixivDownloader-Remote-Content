@@ -1,8 +1,8 @@
 {
   "schemaVersion": 1,
-  "sequence": 5,
-  "generatedAt": "2026-10-03T12:55:26Z",
-  "expiresAt": "2026-11-02T12:55:26Z",
+  "sequence": 9,
+  "generatedAt": "2026-10-22T09:59:59Z",
+  "expiresAt": "2026-11-21T09:59:59Z",
   "requiredLocales": [
     "zh-CN",
     "en-US",
@@ -45,6 +45,43 @@
           "summary": "무료 오픈 소스 애플리케이션과 문서 및 네트워크 액세스 정보를 안내합니다.",
           "contentUrl": "https://sywyar.github.io/PixivDownloader-Remote-Content/announcements/welcome-2026-08-12/ko-KR.html",
           "contentSha256": "7e67af6ceb3522c5cb5ebd19b998f027ac75cb4d4b1ab54fa257aa18adc46e2c"
+        }
+      }
+    },
+    {
+      "id": "emsign-java-trust-2026-10-22",
+      "publishedAt": "2026-10-22T09:59:59Z",
+      "severity": "warning",
+      "locales": {
+        "en-US": {
+          "title": "emSign certificate trust risk",
+          "summary": "Users of v1.14.2 and earlier should update immediately to v1.14.3 or later to reduce the risk of intercepted outbound HTTPS traffic and exposure of cookies and other sensitive data.",
+          "contentUrl": "https://sywyar.github.io/PixivDownloader-Remote-Content/announcements/emsign-java-trust-2026-10-22/en-US.html",
+          "contentSha256": "1029fb320741014b017b7ec87d1e1de434796b81ac2ce243620e6171939d3d2e"
+        },
+        "ja-JP": {
+          "title": "emSign 証明書の信頼に関するリスク",
+          "summary": "v1.14.2 以前をお使いの方は、送信する HTTPS 通信の乗っ取りや Cookie などの機密情報の漏えいリスクを減らすため、直ちに v1.14.3 以降へ更新してください。",
+          "contentUrl": "https://sywyar.github.io/PixivDownloader-Remote-Content/announcements/emsign-java-trust-2026-10-22/ja-JP.html",
+          "contentSha256": "a737f909ffd24bad9af53c71f4e94ad27973bb7960b07f0212f6f36e113f02c3"
+        },
+        "ko-KR": {
+          "title": "emSign 인증서 신뢰 위험",
+          "summary": "v1.14.2 및 이전 버전 사용자는 외부 HTTPS 통신 가로채기와 Cookie 등 민감한 데이터 유출 위험을 줄이기 위해 즉시 v1.14.3 이상으로 업데이트해 주세요.",
+          "contentUrl": "https://sywyar.github.io/PixivDownloader-Remote-Content/announcements/emsign-java-trust-2026-10-22/ko-KR.html",
+          "contentSha256": "c01598bce810047133761db716bc0e52f5836e39756c1ec50c8885d1a021e3d5"
+        },
+        "zh-CN": {
+          "title": "emSign 证书信任风险",
+          "summary": "v1.14.2 及以前版本的用户请立即更新至 v1.14.3 及以上，降低出站 HTTPS 通信被劫持及 Cookie 等敏感数据泄露的风险。",
+          "contentUrl": "https://sywyar.github.io/PixivDownloader-Remote-Content/announcements/emsign-java-trust-2026-10-22/zh-CN.html",
+          "contentSha256": "ba1696ce881e1b70eab990bba85f50c348d1a59b8aac0f1e3996573569b0f882"
+        },
+        "zh-Hant": {
+          "title": "emSign 憑證信任風險",
+          "summary": "v1.14.2 及以前版本的使用者請立即更新至 v1.14.3 及以上，降低對外 HTTPS 通訊遭劫持及 Cookie 等敏感資料外洩的風險。",
+          "contentUrl": "https://sywyar.github.io/PixivDownloader-Remote-Content/announcements/emsign-java-trust-2026-10-22/zh-Hant.html",
+          "contentSha256": "0123571d945315f625bab98d2ab66b6e93e73f829b78735e229709d580e42105"
         }
       }
     }

@@ -21,6 +21,13 @@ ROOT = Path(__file__).resolve().parents[1]
 INDEX_PATH = ROOT / "announcements" / "index.json"
 SIGNATURE_PATH = ROOT / "announcements" / "index.json.sig"
 PUBLIC_BASE = "https://sywyar.github.io/PixivDownloader-Remote-Content/"
+ALLOWED_REFERENCE_LINKS = {
+    "https://bugzilla.mozilla.org/show_bug.cgi?id=2083449",
+    "https://emudhra.we-have-a-problem.com/",
+    "https://www.cve.org/CVERecord?id=CVE-2026-111943",
+    "https://go.dev/issue/82345",
+    "https://ops.java/emudhra",
+}
 OFFICIAL_KEY_ID = "pixivdownloader-official-root-2026-07"
 MAX_INDEX_VALIDITY = timedelta(days=31)
 CONTENT_SECURITY_POLICY = (
@@ -112,6 +119,9 @@ def validate_link(value: str, context: str) -> None:
     require(len(value.encode("utf-8")) <= 2048 and not CONTROL_RE.search(value)
             and "\\" not in value and "%" not in value,
             f"{context}: link is not canonical")
+    # 第三方报告按完整地址放行，避免扩大为整站白名单。
+    if value in ALLOWED_REFERENCE_LINKS:
+        return
     try:
         parsed = urlsplit(value)
         port = parsed.port
