@@ -2,42 +2,44 @@
 
 [简体中文](README.md) · [한국어](README_ko.md)
 
-This repository stores remote static content published to administrators of [Sywyar/PixivDownloader](https://github.com/Sywyar/PixivDownloader). It currently contains announcement documents and their index. GitHub Pages publishes the files directly; there is no server-side application or dynamic build step.
+This repository hosts official announcements read by [PixivDownloader](https://github.com/Sywyar/PixivDownloader) administrators inside the application. GitHub Pages publishes the localized static HTML documents, JSON index, and detached Ed25519 signature directly from the root of the `master` branch.
 
-## Announcement URLs
+- Add or translate announcements: see [CONTRIBUTING.md](CONTRIBUTING.md)
+- Report security issues privately: see [SECURITY.md](SECURITY.md)
 
-- Index: `https://sywyar.github.io/PixivDownloader-Remote-Content/announcements/index.json`
-- Index signature: `https://sywyar.github.io/PixivDownloader-Remote-Content/announcements/index.json.sig`
-- Document: `https://sywyar.github.io/PixivDownloader-Remote-Content/announcements/<message-id>/<locale>.html`
-- Source: `announcements/<message-id>/<locale>.html` on the `master` branch
+## 1. Public URLs and layout
 
-Locales use canonical BCP 47 tags such as `zh-CN`, `en-US`, and `zh-Hant`. The client selects a locale from the index and applies its own locale fallback rules when no exact document exists.
+| Resource | URL or Path |
+| --- | --- |
+| Announcement index | `https://sywyar.github.io/PixivDownloader-Remote-Content/announcements/index.json` |
+| Index signature | `https://sywyar.github.io/PixivDownloader-Remote-Content/announcements/index.json.sig` |
+| Announcement HTML | `https://sywyar.github.io/PixivDownloader-Remote-Content/announcements/<message-id>/<locale>.html` |
+| Source files | `announcements/<message-id>/<locale>.html` on `master` |
 
-## Publishing and security boundary
+Locales use canonical BCP 47 tags (currently requiring `zh-CN`, `en-US`, `zh-Hant`, `ja-JP`, and `ko-KR`). The client caches verified snapshots locally and applies its own locale fallback rules when a locale is absent.
 
-- Configure GitHub Pages to publish from the repository root on `master` and enforce HTTPS.
-- Every change to `master` should pass `Content validation / validate`. Automatic renewal pushes a fast-forward commit to `master`; if branch protection prohibits direct pushes, adapt the publication workflow before enabling it. Do not bypass protection.
-- The official Ed25519 trust root signs the exact index bytes. The client verifies the signature before parsing and rejects expired or rolled-back indexes; every document must also match its SHA-256 in the index.
-- An index is valid for at most 31 days. Renewal or any index change must increase `sequence`, refresh the validity window, and receive a new detached signature using the protected signing key after all bytes are final. Document digests must match their files; renewal alone preserves announcements and their digests. Ship a new trust root in the client before rotating the signing key.
-- Published announcement documents and existing locale metadata are immutable. Publish corrections under a new `message-id`. New locales may be added to an existing announcement.
-- HTML may contain only the static elements, inline CSS, and controlled HTTPS links accepted by the repository validator. Scripts, event attributes, forms, iframes, images, fonts, and other external resources are prohibited.
-- Never commit credentials, personal information, user data, or anything requiring access control. Treat every file in this repository and on GitHub Pages as public.
+## 2. Security and publishing constraints
 
-Read [CONTRIBUTING.md](CONTRIBUTING.md) before adding or translating an announcement. Report security issues privately as described in [SECURITY.md](SECURITY.md). Run the local validator with:
+- **Pre-parse signature and digest binding**: The raw bytes of `announcements/index.json` are signed with the official Ed25519 trust root (`pixivdownloader-official-root-2026-07`). Clients verify the detached signature before parsing JSON, enforce the validity window and monotonically increasing `sequence`, and verify each HTML file against its indexed SHA-256.
+- **Validity window and immutability**: An index is valid for at most 31 days. Every edit or renewal must increment `sequence`, update `generatedAt` and `expiresAt`, and regenerate `index.json.sig`. Release a client that trusts the new key before rotating the signing key. **Published HTML files and existing locale metadata are immutable**; publish corrections under a new `message-id` (adding a new locale to an existing announcement is permitted).
+- **Restricted static HTML**: Only static text/layout tags, a single inline `<style>` block, the required restrictive CSP meta tag, `no-referrer`, and allowlisted HTTPS links accepted by `scripts/validate_content.py` are permitted. Scripts, event handlers, forms, iframes, images, external fonts, and network requests are prohibited.
+- **Public repository**: Treat all files in this repository and on GitHub Pages as public; never commit credentials, personal data, or non-public information.
+
+Run local unit tests and content validation from the repository root (requires Python 3):
 
 ```bash
 python -m unittest discover -s scripts -p "test_*.py"
 python scripts/validate_content.py
 ```
 
-## Automatic renewal
+## 3. Automatic index renewal (`Renew announcement index`)
 
-`Renew announcement index` checks daily at 03:37 UTC and can also run manually from Actions on `master`. When the index has at most 7 days left, including when it has expired, the workflow verifies the original signature and content, increments `sequence`, updates `generatedAt`, and sets `expiresAt` to 30 days after generation. Announcement entries, documents, and SHA-256 values stay unchanged. An index outside the renewal window causes no signing or commit.
+The workflow runs daily at `03:37 UTC` on `master` (and supports manual `workflow_dispatch`):
 
-Before enabling renewal, create an `announcement-signing` Environment in this repository, allow deployments only from `master`, and add the `PLUGIN_SIGNING_PRIVATE_KEY_PEM_BASE64` Secret. Its value must be the Base64 encoding of the current official Ed25519 PKCS#8 PEM private key, matching the client's built-in `pixivdownloader-official-root-2026-07` trust root. An unrelated new key will fail verification. Omit required reviewers for unattended renewal; configuring reviewers makes renewal wait for approval. Never put the key in issues, logs, or repository files.
+- **Trigger**: When the index has 7 days or less remaining (or has expired), the workflow verifies the existing signature and HTML digests, increments `sequence` by `1`, updates `generatedAt`, and sets `expiresAt` to 30 days later while keeping announcement entries and SHA-256 digests unchanged. Outside that window, it does not sign or commit.
+- **Environment and secret**: Configure the `announcement-signing` Environment restricted to `master` with the `PLUGIN_SIGNING_PRIVATE_KEY_PEM_BASE64` Secret (Base64-encoded Ed25519 PKCS#8 PEM private key matching `pixivdownloader-official-root-2026-07`). If required reviewers are configured, renewal waits for approval. The key is written only to runner temporary storage during signing and deleted on exit.
+- **Publication and recovery**: The signing job (`contents: write`) pushes `index.json` and `index.json.sig` in one fast-forward commit; the publishing job (`contents: read`, `pages: write`) triggers a GitHub Pages build and waits for deployment (if Pages deployment fails after a commit, the next run republishes `master` without re-signing).
 
-The workflow uses the existing signature CLI from a pinned source commit. The signing step writes the key only to runner temporary storage and deletes it on exit. After signature and content checks pass, it publishes the index and signature in one commit. Concurrent changes to `master` reject the push; a later run starts from the new mainline without forcing or merging changes.
+Allow Actions to write to `master`, configure Pages to publish from its root, and enable HTTPS. Every change should pass `Content validation / validate`. If branch protection prohibits direct pushes, adapt the renewal workflow without bypassing protection. Disabling the workflow stops automatic renewal and publication recovery; if GitHub disables scheduled runs, a maintainer must re-enable them.
 
-After pushing with this repository's `GITHUB_TOKEN`, the workflow explicitly requests a Pages build and waits for publication of the expected commit. If the commit succeeds but Pages fails, the next run checks and republishes the current `master` without another renewal. Publication uses only Contents read and Pages write; signing uses only Contents write. Actions must be enabled and permitted to write `master`, with Pages publishing from its root. If GitHub disables the schedule, a maintainer must re-enable it or run it manually. Disable the workflow to stop automatic renewal and publication recovery.
-
-This repository is licensed under the [MIT License](LICENSE). The PixivDownloader application is governed by the separate license declared in its main repository.
+This repository is licensed under the [MIT License](LICENSE).
